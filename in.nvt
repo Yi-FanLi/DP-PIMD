@@ -1,0 +1,27 @@
+variable ibead uloop 32 pad
+units		electron
+atom_style	atomic
+atom_modify map yes
+boundary	p p p
+
+pair_style      lj/cut 13.98
+read_data	data2.fcc
+mass		1 1.0
+
+pair_coeff  	* * 0.0001083 5.59 13.98
+pair_modify	shift yes
+
+neigh_modify delay 0 every 1
+
+velocity all set 0.0 0.0 0.0
+
+timestep 0.1
+
+fix 1 all pimd4 method nmpimd ensemble nvt integrator baoab temp 3.42 thermostat PILE_L 975481 tau 10.0
+
+thermo_style custom step f_1[1] f_1[2] f_1[3] f_1[4] f_1[5] f_1[6] f_1[7] f_1[8] f_1[9]
+thermo 1000
+
+dump 3 all custom 1000 dcd7/${ibead}.xyz id x y z fx fy fz vx vy vz
+
+run		100000000

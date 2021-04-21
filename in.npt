@@ -1,0 +1,28 @@
+variable ibead uloop 32 pad
+
+units lj
+atom_style atomic
+atom_modify map yes
+boundary p p p
+region mybox block -100.0 100.0 -100.0 100.0 -100.0 100.0
+create_box 1 mybox
+create_atoms 1 random 256 975481 mybox
+pair_style lj/cut 13.98
+pair_coeff    * * 3.0 5.00 13.98
+pair_modify shift yes
+mass 1 20.0
+timestep 0.01
+
+neigh_modify delay 0 every 1
+
+velocity all set 0 0 0
+
+fix 4 all pimd4 method nmpimd ensemble npt integrator baoab thermostat PILE_L 975481 temp 273.15 tau 0.5 press 0.05 taup 40.0
+
+thermo_style custom step vol f_4[1] f_4[2] f_4[3] f_4[4] f_4[5] f_4[9] f_4[11]
+thermo 1000
+
+dump dcd all xyz 1000 dcd2/${ibead}.xyz
+dump_modify dcd sort id
+
+run 10000000

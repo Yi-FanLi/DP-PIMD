@@ -1,2 +1,2 @@
-# lammpsPIMD
-A lammps fix module to perform path integral molecular dynamics (PIMD) tasks.
+# DP-PIMD
+This repo stores the input and data processing scripts for testing DP-PIMD.
