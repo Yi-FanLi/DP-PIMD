@@ -14,7 +14,6 @@ Compile it:
 
 ```
     cd bazel-3.7.2
-
     ./compile.sh
 ```
 
