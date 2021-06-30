@@ -13,4 +13,8 @@ Compile it:
     cd bazel-3.7.2
     ./compile.sh
 `
+
+Add bazel to PATH environment variable:
+`export PATH=/scratch/gpfs/yifanl/Softwares/bazel-3.7.2/output:$PATH`
+
 ## 2. Install LAMMPS
