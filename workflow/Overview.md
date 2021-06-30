@@ -109,4 +109,6 @@ Configuration finished
 
 ```
 
+Build it:
+`bazel build`
 ## 2. Install LAMMPS
