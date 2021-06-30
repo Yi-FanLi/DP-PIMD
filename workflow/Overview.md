@@ -12,11 +12,11 @@ Unzip it:
 
 Compile it:
 
-`
+```
     cd bazel-3.7.2
 
     ./compile.sh
-`
+```
 
 Add bazel to PATH environment variable:
 
