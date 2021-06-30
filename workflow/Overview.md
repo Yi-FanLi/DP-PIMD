@@ -11,6 +11,7 @@ Unzip it:
 `unzip bazel-3.7.2-dist.zip -d bazel-3.7.2`
 
 Compile it:
+
 `
     cd bazel-3.7.2
 
