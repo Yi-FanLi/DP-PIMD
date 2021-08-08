@@ -1,114 +1,86 @@
-# Using DP-PIMD (DeepMD-kit + Path Integral Molecular Dynamics)
-This document describes how you can use 
+# Using DP-PIMD (DeePMD-kit + Path Integral Molecular Dynamics)
+This document describes how we can use DeepMD-kit and LAMMPS to run path integral molecular dynamics(PIMD). 
+## 1. Install DeePMD-kit and LAMMPS
+The easiest way to do install DeePMD-kit is via off-line packages from
+```https://github.com/deepmodeling/deepmd-kit/releases/download/v2.0.0.b4/```
 
-## 1. Install DeepMD-kit
-### 1.1 Install bazel
-To install tensorflow C++ API, we need to install bazel first. We can download bazel from github:
+However, the development of LAMMPS for PIMD has not been contributed into the LAMMPS official repository, so it has not been included into the off-line packages. Therefore, we need to build DeePMD-kit and LAMMPS from source.
 
-`wget https://github.com/bazelbuild/bazel/releases/download/3.7.2/bazel-3.7.2-dist.zip`
-
-Unzip it:
-
-`unzip bazel-3.7.2-dist.zip -d bazel-3.7.2`
-
-Compile it:
-
+The system we use is:
 ```
-cd bazel-3.7.2
-./compile.sh
+Linux version 3.10.0-1160.25.1.el7.x86_64
 ```
-
-Add bazel to PATH environment variable:
-
-`export PATH=/scratch/gpfs/yifanl/Softwares/bazel-3.7.2/output:$PATH`
-
-### 1.2 Install tensorflow
-The tensorflow C++ API version we are using is 2.5.0. We first clone it from github and swith into the `v2.5.0` branch:
-
+To make all things clear, we set up a new `anaconda` environment and then install the compilers and cudatoolkit in it. We refer to the installation procedure in this `gist` to set up the `conda` environment, install DeePMD-kit and LAMMPS:
 ```
-git clone https://github.com/tensorflow/tensorflow.git
-cd tensorflow
-git checkout -b v2.5.0 v2.5.0
+https://gist.github.com/y1xiaoc/5cc980252db59e484c39060179959c67
 ```
-
-Configure it:
-
-`./configure`
-
-The configurations I am using are:
-
+Please note that our installation differs from that of the `gist` in the following ways:
+- We install our own modified lammps so that the `fix dp_pimd` style is included. Please clone the LAMMPS from Yifan's github instead of the official site:
 ```
-Please specify the location of python. [Default is /usr/bin/python3]: /scratch/gpfs/yifanl/Packages/tensorflow/venv/tf2.5-dp-0621v2/bin/python3.8
+git clone https://github.com/Yi-FanLi/lammps.git
+```
+- In addition to the packages specified in the gist, we also need to enable `nvcc` via `conda install -c conda-forge cudatoolkit-dev`.
+- In this project we do not need PLUMED, so installing PLUMED is not necessary. 
 
 
-Found possible Python library paths:
-  /scratch/gpfs/yifanl/Packages/tensorflow/venv/tf2.5-dp-0621v2/lib/python3.8/site-packages
-Please input the desired Python library path to use.  Default is [/scratch/gpfs/yifanl/Packages/tensorflow/venv/tf2.5-dp-0621v2/lib/python3.8/site-packages]
 
-Do you wish to build TensorFlow with ROCm support? [y/N]: N
-No ROCm support will be enabled for TensorFlow.
+## 2. Train the forcefield
+In this project we use the forcefield in the paper *Phase Diagram of a Deep Potential Water Model* (https://doi.org/10.1103/PhysRevLett.126.236001). The training data and the trained model can be downloaded from DP Library: 
+```
+http://dplibrary.deepmd.net/#/project_details?project_id=202010.001
+````
+DP Library is free to use, but we need to sign up an account and then download the data and model. 
 
-Do you wish to build TensorFlow with CUDA support? [y/N]: y
-CUDA support will be enabled for TensorFlow.
+After downloading the data, we can train the model from scratch. The input script has been included in the tarball. Here, we just convert the model trained with DeePMD-kit v1.1 to a v2.0-compatible model. The command we use is `dp convert-from`.
+```
+dp convert-from 1.2 -i frozen_model.pb
+```
+It will give us a file `convert_out.pb` which can be used by DeePMD-kit v2.0.
 
-Do you wish to build TensorFlow with TensorRT support? [y/N]: N
-No TensorRT support will be enabled for TensorFlow.
+## 3. Compress the forcefield
+To speed up the MD simulations, we can compress the model so that the force calculation can be much faster. We need the input script used when training the forcefield to compress the model, but the `input.json` given in the tarball is for DeePMD-kit v1.1, so we need to convert it.
 
-Asking for detailed CUDA configuration...
+First unarchive the tarball:
+```
+tar -xjvf 2020.09.final.clean.tar.bz2
+cd 2020.09.final.clean/data
+```
+Then start the training process for several steps:
+```
+mkdir train
+cd train
+cp ../../train_scripts/input.json .
+vi input.json
+40G
+dd
+452G
+dd
+:wq
+dp train input.json
+```
+After several seconds it will generate an `out.json` file. Then we use `Ctrl+C` to shut down the training and compress the model:
+```
+cd ..
+mkdir compress
+cd compress
+cp ../train/out.json .
+cp ../../../convert_out.pb .
+dp compress out.json -i convert_out.pb
+```
+After this run finishes, we will obtain a `frozen_model_compressed.pb` file. This is the model we will use.
 
-Please specify the CUDA SDK version you want to use. [Leave empty to default to CUDA 10]: 11.3
+## 4. Run the PIMD task
+We use the newly-developed fix style `dp_pimd` in LAMMPS to run this task. The `lmp_run` folder contains 8 `data` files, which are the LAMMPS initial configuration files of the 8 beads. This folder also include an `in.lammps` file, which tells lammps which commands to execute. Also, it includes a `run.slurm` script which submits tasks to the Princeton tiger cluster. You can change the configurations in it to run this task on your own cluster. The last line of `run.slurm` runs the LAMMPS task:
+```
+mpirun -np 8 lmp -in in.lammps -p 8x1 -log log -screen screen
+```
+Note that the `-p MxN` option of LAMMPS specifies the partition configuration of the LAMMPS run. `M` specifies how many replicas LAMMPS uses, and is the number of beads in PIMD. `N` denotes how many processes are used for each replica. Moreover, the number of processes specified by `-np` in the mpi task must be equal to `MxN`.
 
-
-Please specify the cuDNN version you want to use. [Leave empty to default to cuDNN 7]: 8.2.0
-
-
-Please specify the locally installed NCCL version you want to use. [Leave empty to use http://github.com/nvidia/nccl]: 
-
-
-Please specify the comma-separated list of base paths to look for CUDA libraries and headers. [Leave empty to use the default]: /usr/local/cuda-11.3,/usr/local/cudnn/cuda-11.3/8.2.0/
-
-
-Found CUDA 11.3 in:
-    /usr/local/cuda-11.3/targets/x86_64-linux/lib
-    /usr/local/cuda-11.3/targets/x86_64-linux/include
-Found cuDNN 8 in:
-    /usr/local/cudnn/cuda-11.3/8.2.0/lib64
-    /usr/local/cudnn/cuda-11.3/8.2.0/include
-
-
-Please specify a list of comma-separated CUDA compute capabilities you want to build with.
-You can find the compute capability of your device at: https://developer.nvidia.com/cuda-gpus. Each capability can be specified as "x.y" or "compute_xy" to include both virtual and binary GPU code, or as "sm_xy" to only include the binary code.
-Please note that each additional compute capability significantly increases your build time and binary size, and that TensorFlow only supports compute capabilities >= 3.5 [Default is: 3.5,7.0]: 6.0
-
-
-Do you want to use clang as CUDA compiler? [y/N]: n
-nvcc will be used as CUDA compiler.
-
-Please specify which gcc should be used by nvcc as the host compiler. [Default is /usr/bin/gcc]: /scratch/gpfs/yifanl/Softwares/gcc-9.3.0/build/bin/gcc
-
-
-Please specify optimization flags to use during compilation when bazel option "--config=opt" is specified [Default is -Wno-sign-compare]: 
-
-
-Would you like to interactively configure ./WORKSPACE for Android builds? [y/N]: N
-Not configuring the WORKSPACE for Android builds.
-
-Preconfigured Bazel build configs. You can use any of the below by adding "--config=<>" to your build command. See .bazelrc for more details.
-	--config=mkl         	# Build with MKL support.
-	--config=mkl_aarch64 	# Build with oneDNN and Compute Library for the Arm Architecture (ACL).
-	--config=monolithic  	# Config for mostly static monolithic build.
-	--config=numa        	# Build with NUMA support.
-	--config=dynamic_kernels	# (Experimental) Build kernels into separate shared objects.
-	--config=v2          	# Build TensorFlow 2.x instead of 1.x.
-Preconfigured Bazel build configs to DISABLE default on features:
-	--config=noaws       	# Disable AWS S3 filesystem support.
-	--config=nogcp       	# Disable GCP support.
-	--config=nohdfs      	# Disable HDFS support.
-	--config=nonccl      	# Disable NVIDIA NCCL support.
-Configuration finished
-
+The followings are the commands I use to submit the task:
+```
+cd ../
+cp 2020.09.final.clean/data/compress/frozen_model_compressed.pb lmp_run/
+cd lmp_run
+sbatch run.slrum
 ```
 
-Build it:
-`bazel build`
-## 2. Install LAMMPS
