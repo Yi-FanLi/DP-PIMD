@@ -1,0 +1,23 @@
+# bulk water
+variable ibead uloop 32 pad
+
+units           metal
+boundary        p p p
+atom_style      atomic
+atom_modify     map yes
+
+neigh_modify    every 1 delay 0 check no
+
+read_data       data.${ibead}
+
+pair_style	deepmd frozen_model_compressed.pb
+pair_coeff	
+
+fix 1 all dp_pimd method nmpimd integrator baoab ensemble nve temp 300.0 
+timestep        0.0002
+thermo_style custom step f_1[1*5] f_1[7]
+thermo          1
+dump		d1 all custom 1000 ${ibead}.dump id type x y z 
+dump_modify d1 sort id
+
+run             100000
