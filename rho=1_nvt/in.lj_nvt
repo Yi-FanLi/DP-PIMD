@@ -1,0 +1,38 @@
+variable ibead uloop 32 pad
+
+units lj
+atom_style atomic
+atom_modify map yes
+boundary p p p
+lattice sc 1.0 
+region cube block -2 2 -2 2 -2 2
+create_box 1 cube
+create_atoms 1 region cube
+pair_style lj/cut 1.0
+pair_coeff    * * 1.0 1.0 1.0
+pair_modify shift yes
+mass 1 1.0
+
+variable nbeads equal 4
+variable T_target equal 1.0
+variable T_init equal ${T_target}*${nbeads}
+
+timestep 0.001
+
+neigh_modify delay 0 every 1
+
+velocity all create ${nbeads} ${ibead}
+
+fix 1 all dp_pimd method nmpimd fmmode physical ensemble nvt integrator obabo thermostat PILE_L 975481 temp 1.0 tau 1.0 scale 1.0
+fix 2 all momentum 1 linear 1 1 1
+
+#thermo_style custom step f_1[1] f_1[2] f_1[3] f_1[4] f_1[5] f_1[6] f_1[7]
+thermo_style custom step f_1[1*7]
+thermo 100
+thermo_modify norm no
+
+#dump dcd all custom 10000 ${ibead}.xyz id x y z vx vy vz fx fy fz
+dump dcd all custom 100 ${ibead}.xyz id x y z
+dump_modify dcd sort id
+
+run 100000
