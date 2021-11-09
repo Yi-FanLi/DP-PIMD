@@ -11,7 +11,7 @@ neigh_modify    every 1 delay 0 check no
 read_data       data.${ibead}
 
 pair_style	deepmd frozen_model_compressed.pb
-pair_coeff	
+pair_coeff	* *
 
 fix 1 all dp_pimd method nmpimd integrator baoab ensemble nve temp 300.0 
 timestep        0.0002
