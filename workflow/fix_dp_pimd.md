@@ -28,6 +28,8 @@
 - fmmode: the way of choosing fictitious mass
   - physical (default): the physical mass of the atoms
   - normal: the pnysical mass times eigenvalues of each normal mode
+- map: unwrap and wrap the ring polymer before and after the harmonic oscillator equation of motion, default yes
+- fixcom: fix the center of mass of the ring polymer system, default yes
 
 ## 2. Output properties
 - 1: normal mode kinetic energy, prints the kinetic energy of one indivisual normal mode in each log file
