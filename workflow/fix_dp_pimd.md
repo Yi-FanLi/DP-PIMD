@@ -32,13 +32,14 @@
 ## 2. Output properties
 - 1: normal mode kinetic energy, prints the kinetic energy of one indivisual normal mode in each log file
 - 2: normal mode spring elastic energy, prints the ring polymer elastic energy of one indivisual normal mode in each log file
-- 3: average potential energy over all beads
-- 4: total ring polymer Hamiltonian
+- 3: potential energy of each beads
+- 4: total ring polymer Hamiltonian, divided by the number of beads
 - 5: primitive quantum kinetic energy estimator (smae as kinetic_td in i-PI)
 - 6: virial quantum kinetic energy estimator
 - 7: centroid-virial quantum kinetic energy estimator (same as kinetic_cv in i-PI)
 - 8: primitive pressure estimator
-- 9: virial pressure estimator
+- 9: classical pressure estimator
 - 10: centroid-virial presure estimator (same as pressure_cv in i-PI)
 - 11: velocity of the volume degree of freedom; only useful in the NPH and NPT ensembles
-- 12: total enthalpy, Hamiltonian + PV
+- 12: kinetic energy of the volume degree of freedom; only useful in the NPH and NPT ensembles
+- 13: total enthalpy, Hamiltonian / #beads + 0.5*W*vw*vw / #beads + PV
