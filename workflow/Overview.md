@@ -19,6 +19,10 @@ Please note that our installation differs from that of the `gist` in the followi
 ```
 git clone https://github.com/Yi-FanLi/lammps.git
 ```
+After that, check out to `beads` branch:
+```
+git checkout beads
+```
 - In addition to the packages specified in the gist, we also need to enable `nvcc` via `conda install -c conda-forge cudatoolkit-dev`.
 - In this project we do not need PLUMED, so installing PLUMED is not necessary. 
 
