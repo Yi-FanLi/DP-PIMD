@@ -1,11 +1,12 @@
 # Test LAMMPS PIMD on the Lennard-Jones Potential
 ## 1. Install LAMMPS
-The configuration toold and compilers I use are
+The configuration tools and compilers I use are
 | Tool      | Version |
 | :-----------: | :-----------: |
 | cmake      | 3.17.5       |
 | gcc   | 9.3.1 20200408 (Red Hat 9.3.1-2)        |
 | openmpi | 3.1.5 |
+
 The installation process of LAMMPS is
 ```
 git clone https://github.com/Yi-FanLi/lammps.git
