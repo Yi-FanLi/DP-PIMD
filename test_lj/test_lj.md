@@ -9,6 +9,7 @@ The configuration toold and compilers I use are
 The installation process of LAMMPS is
 ```
 git clone https://github.com/Yi-FanLi/lammps.git
+git checkout beads
 cd lammps
 mkdir build
 cd build
