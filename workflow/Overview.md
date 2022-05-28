@@ -23,6 +23,7 @@ After that, check out to `beads` branch:
 ```
 git checkout beads
 ```
+- The `REPLICA` pakcage of LAMMPS should be installed.
 - In addition to the packages specified in the gist, we also need to enable `nvcc` via `conda install -c conda-forge cudatoolkit-dev`.
 - In this project we do not need PLUMED, so installing PLUMED is not necessary. 
 
